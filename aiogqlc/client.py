@@ -5,23 +5,9 @@ from aiogqlc.utils import is_file_like
 
 
 class GraphQLClient:
-    def __init__(
-        self, endpoint: str, headers: dict = None, cookies: dict = None
-    ) -> None:
+    def __init__(self, session: aiohttp.ClientSession, endpoint: str) -> None:
+        self.session = session
         self.endpoint = endpoint
-        self.headers = headers or {}
-        self.cookies = cookies or {}
-
-    async def __aenter__(self):
-        self.session = aiohttp.ClientSession(
-            headers={**{aiohttp.hdrs.ACCEPT: "application/json"}, **self.headers},
-            cookies=self.cookies,
-        )
-        await self.session.__aenter__()
-        return self
-
-    async def __aexit__(self, *args):
-        await self.session.__aexit__(*args)
 
     @classmethod
     def prepare_json_data(
@@ -101,7 +87,7 @@ class GraphQLClient:
     ) -> aiohttp.ClientResponse:
         nulled_variables, files = self.prepare(variables)
 
-        headers = {}
+        headers = {aiohttp.hdrs.ACCEPT: "application/json"}
         if not files:
             # normal GraphQL case: just send the query as JSON.
             # nulled_variables should == variables here
